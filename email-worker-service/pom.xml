@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        email-worker-service module
+
+        Kafka consumer that:
+          1. Reads email tasks from Kafka topics (high-priority, normal-priority, retry)
+          2. Sends emails via Mailgun (primary) or SendGrid (failover)
+          3. Implements exponential backoff retries
+          4. Enforces per-provider rate limiting
+          5. Updates task statuses in PostgreSQL
+          6. Moves exhausted tasks to the dead-letter topic
+
+        Assignment requirements: worker service responsibilities
+        Port: 8082 (see application.yml)
+    -->
+
+    <parent>
+        <groupId>com.distributedemail</groupId>
+        <artifactId>distributed-email-sender</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>email-worker-service</artifactId>
+    <name>Email Worker Service</name>
+
+    <dependencies>
+
+        <!-- Shared module: entities, DTOs, enums, provider interface, Kafka models -->
+        <dependency>
+            <groupId>com.distributedemail</groupId>
+            <artifactId>email-common</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Web (minimal — exposes /actuator/health endpoint) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Data JPA — updates task statuses and writes audit logs -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Spring Kafka — consumer factories and @KafkaListener infrastructure -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!-- Actuator: /actuator/health endpoint for Docker health checks -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Jackson Java 8 date/time support (LocalDateTime in Kafka messages) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL JDBC driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+            Bucket4j — Token Bucket rate limiter
+            Assignment requirement: "Rate limiting and throttling to prevent spam
+              and comply with provider limits"
+            Note: groupId changed to com.bucket4j in v8+, but Java package
+                  remains io.github.bucket4j.*
+        -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+        </dependency>
+
+        <!-- OkHttp — makes HTTP calls to Mailgun and SendGrid REST APIs -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+
+        <!-- ============= Test dependencies ============= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

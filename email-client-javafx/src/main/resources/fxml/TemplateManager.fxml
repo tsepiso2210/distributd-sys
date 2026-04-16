@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!--
+    TemplateManager.fxml - Template CRUD with live preview.
+    Assignment requirement: "Template Management" GUI view
+                             "Email templates with dynamic placeholders"
+-->
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.distributedemail.client.controller.TemplateManagerController"
+      styleClass="view-pane" spacing="16">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <!-- LEFT: Template List -->
+    <VBox spacing="10" prefWidth="340" HBox.hgrow="SOMETIMES">
+        <Label text="Email Templates" styleClass="view-title"/>
+        <TableView fx:id="templateTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                <TableColumn fx:id="colName" text="Name" prefWidth="150"/>
+                <TableColumn fx:id="colSubject" text="Subject" prefWidth="120"/>
+            </columns>
+        </TableView>
+        <HBox spacing="8">
+            <Button text="New" styleClass="btn-secondary" onAction="#onNew"/>
+            <Button text="Delete" styleClass="btn-danger" onAction="#onDelete"/>
+        </HBox>
+        <Label fx:id="statusLabel" styleClass="status-label" wrapText="true"/>
+    </VBox>
+
+    <Separator orientation="VERTICAL"/>
+
+    <!-- RIGHT: Template Editor + Preview -->
+    <VBox spacing="12" HBox.hgrow="ALWAYS">
+        <Label text="Template Editor" styleClass="section-title"/>
+
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Label text="Name:" prefWidth="100" styleClass="field-label"/>
+            <TextField fx:id="txtTemplateName" HBox.hgrow="ALWAYS"
+                       promptText="e.g., Welcome Email Template"/>
+        </HBox>
+
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Label text="Subject:" prefWidth="100" styleClass="field-label"/>
+            <TextField fx:id="txtSubjectTemplate" HBox.hgrow="ALWAYS"
+                       promptText="e.g., Welcome to {{course}}, {{name}}!"/>
+        </HBox>
+
+        <VBox spacing="4">
+            <Label text="Body (supports {{name}}, {{studentNumber}}, {{course}}, etc.):" styleClass="field-label"/>
+            <TextArea fx:id="txtBodyTemplate" prefRowCount="8"
+                      promptText="Hello {{name}},&#10;Welcome to {{course}}!&#10;Your student number is {{studentNumber}}."/>
+        </VBox>
+
+        <VBox spacing="4">
+            <Label text="Description:" styleClass="field-label"/>
+            <TextArea fx:id="txtDescription" prefRowCount="2"
+                      promptText="Brief description of this template's purpose"/>
+        </VBox>
+
+        <HBox spacing="8">
+            <Button text="Save Template" styleClass="btn-primary" onAction="#onSave"/>
+        </HBox>
+
+        <Separator/>
+
+        <!-- Live Preview -->
+        <Label text="Live Preview" styleClass="section-title"/>
+        <Label text="Enter test variables as JSON, then click Preview:" styleClass="hint-label"/>
+        <TextArea fx:id="txtPreviewVars" prefRowCount="4"
+                  promptText='{"name": "Alice", "studentNumber": "ST001", "course": "CS401"}'/>
+        <Button text="Preview with Variables" styleClass="btn-secondary" onAction="#onPreview"/>
+        <Label text="Rendered output:" styleClass="field-label"/>
+        <TextArea fx:id="txtPreviewOutput" prefRowCount="5" editable="false" styleClass="preview-area"/>
+    </VBox>
+</HBox>

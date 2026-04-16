@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!--
+    ComposeBulkEmail.fxml - UI for creating a new bulk email campaign.
+    Assignment requirement: "Compose Bulk Email" GUI view
+-->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.distributedemail.client.controller.ComposeBulkEmailController"
+      styleClass="view-pane" spacing="16">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <Label text="Compose Bulk Email" styleClass="view-title"/>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+        <VBox spacing="14">
+            <padding><Insets top="4" right="4" bottom="4" left="4"/></padding>
+
+            <!-- Campaign Name -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Campaign Name:" prefWidth="130" styleClass="field-label"/>
+                <TextField fx:id="txtCampaignName" HBox.hgrow="ALWAYS"
+                           promptText="e.g., Assignment Due Reminder - CS401"/>
+            </HBox>
+
+            <!-- Subject -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Subject:" prefWidth="130" styleClass="field-label"/>
+                <TextField fx:id="txtSubject" HBox.hgrow="ALWAYS"
+                           promptText="e.g., Your {{course}} assignment is due soon!"/>
+            </HBox>
+
+            <!-- Sender -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="From Email:" prefWidth="130" styleClass="field-label"/>
+                <TextField fx:id="txtSenderEmail" HBox.hgrow="ALWAYS"
+                           promptText="admin@university.edu"/>
+            </HBox>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="From Name:" prefWidth="130" styleClass="field-label"/>
+                <TextField fx:id="txtSenderName" HBox.hgrow="ALWAYS"
+                           promptText="CS Department"/>
+            </HBox>
+
+            <!-- Priority - Assignment requirement -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Priority:" prefWidth="130" styleClass="field-label"/>
+                <ComboBox fx:id="cbPriority" prefWidth="160"/>
+                <Label text="HIGH = processed first" styleClass="hint-label"/>
+            </HBox>
+
+            <!-- Template Selection -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Template:" prefWidth="130" styleClass="field-label"/>
+                <ComboBox fx:id="cbTemplate" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
+
+            <!-- Body -->
+            <VBox spacing="6">
+                <Label text="Email Body (or use template above):" styleClass="field-label"/>
+                <TextArea fx:id="txtBody" prefRowCount="6"
+                          promptText="Write email body here. Use {{name}}, {{studentNumber}}, {{course}} placeholders&#10;Example: Hello {{name}}, welcome to {{course}}! Your student number is {{studentNumber}}."/>
+            </VBox>
+
+            <!-- Recipients -->
+            <VBox spacing="6">
+                <Label text="Recipients (one per line: email | Full Name | key=value,key=value):" styleClass="field-label"/>
+                <Label text="Example:  alice@student.edu | Alice Smith | studentNumber=ST001,course=CS401 Distributed Systems"
+                       styleClass="hint-label"/>
+                <TextArea fx:id="txtRecipients" prefRowCount="8"
+                          promptText="alice@student.edu | Alice Smith | studentNumber=ST001,course=CS401&#10;bob@student.edu | Bob Jones | studentNumber=ST002,course=CS401"/>
+            </VBox>
+
+            <!-- Send Button -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Button fx:id="btnSend" text="Send Campaign" styleClass="btn-primary"
+                        onAction="#onSend"/>
+                <ProgressIndicator fx:id="sendingIndicator" prefWidth="24" prefHeight="24" visible="false"/>
+                <Label fx:id="statusLabel" styleClass="status-label" text="" wrapText="true"/>
+            </HBox>
+        </VBox>
+    </ScrollPane>
+</VBox>

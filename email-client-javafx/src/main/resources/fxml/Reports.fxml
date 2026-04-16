@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!--
+    Reports.fxml - Campaign reports and delivery logs.
+    Assignment requirement: "Reports / Logs" GUI view
+-->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.distributedemail.client.controller.ReportsController"
+      styleClass="view-pane" spacing="16">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="Reports / Logs" styleClass="view-title"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Refresh" styleClass="btn-secondary" onAction="#onRefresh"/>
+    </HBox>
+
+    <Label text="Campaigns:" styleClass="section-title"/>
+
+    <TableView fx:id="campaignTable" prefHeight="200">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+            <TableColumn fx:id="colName" text="Campaign Name" prefWidth="280"/>
+            <TableColumn fx:id="colTotal" text="Total" prefWidth="80"/>
+            <TableColumn fx:id="colSent" text="Sent" prefWidth="80"/>
+            <TableColumn fx:id="colFailed" text="Failed" prefWidth="80"/>
+            <TableColumn fx:id="colCreatedAt" text="Created At" prefWidth="180"/>
+        </columns>
+    </TableView>
+
+    <Label text="Email Tasks (click a campaign above):" styleClass="section-title"/>
+
+    <TableView fx:id="taskTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colTaskId" text="ID" prefWidth="60"/>
+            <TableColumn fx:id="colEmail" text="Recipient Email" prefWidth="200"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="110"/>
+            <TableColumn fx:id="colProvider" text="Provider" prefWidth="100"/>
+            <TableColumn fx:id="colRetries" text="Retries" prefWidth="70"/>
+            <TableColumn fx:id="colLastError" text="Last Error" prefWidth="300"/>
+        </columns>
+    </TableView>
+
+    <Label fx:id="statusLabel" styleClass="status-label" text=""/>
+</VBox>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!--
+    Dashboard.fxml - Overview of email delivery statistics.
+    Assignment requirement: "Dashboard" GUI view
+-->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.distributedemail.client.controller.DashboardController"
+      styleClass="view-pane" spacing="20">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <!-- Page Title -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="Dashboard" styleClass="view-title"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Refresh" styleClass="btn-secondary" onAction="#onRefresh"/>
+        <ProgressIndicator fx:id="loadingIndicator" prefWidth="20" prefHeight="20" visible="false"/>
+    </HBox>
+
+    <!-- Stats Cards Grid -->
+    <GridPane hgap="16" vgap="16">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="16.66"/>
+            <ColumnConstraints percentWidth="16.66"/>
+            <ColumnConstraints percentWidth="16.66"/>
+            <ColumnConstraints percentWidth="16.66"/>
+            <ColumnConstraints percentWidth="16.66"/>
+            <ColumnConstraints percentWidth="16.66"/>
+        </columnConstraints>
+
+        <!-- Sent -->
+        <VBox GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="stat-card">
+            <Label text="Sent" styleClass="stat-label"/>
+            <Label fx:id="lblTotalSent" text="0" styleClass="stat-value stat-sent"/>
+        </VBox>
+
+        <!-- Delivered -->
+        <VBox GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="stat-card">
+            <Label text="Delivered" styleClass="stat-label"/>
+            <Label fx:id="lblTotalDelivered" text="0" styleClass="stat-value stat-delivered"/>
+        </VBox>
+
+        <!-- Failed -->
+        <VBox GridPane.columnIndex="2" GridPane.rowIndex="0" styleClass="stat-card">
+            <Label text="Failed" styleClass="stat-label"/>
+            <Label fx:id="lblTotalFailed" text="0" styleClass="stat-value stat-failed"/>
+        </VBox>
+
+        <!-- Pending -->
+        <VBox GridPane.columnIndex="3" GridPane.rowIndex="0" styleClass="stat-card">
+            <Label text="Pending" styleClass="stat-label"/>
+            <Label fx:id="lblTotalPending" text="0" styleClass="stat-value stat-pending"/>
+        </VBox>
+
+        <!-- Retrying -->
+        <VBox GridPane.columnIndex="4" GridPane.rowIndex="0" styleClass="stat-card">
+            <Label text="Retrying" styleClass="stat-label"/>
+            <Label fx:id="lblTotalRetrying" text="0" styleClass="stat-value stat-retrying"/>
+        </VBox>
+
+        <!-- Dead Lettered -->
+        <VBox GridPane.columnIndex="5" GridPane.rowIndex="0" styleClass="stat-card">
+            <Label text="Dead Letter" styleClass="stat-label"/>
+            <Label fx:id="lblTotalDeadLettered" text="0" styleClass="stat-value stat-dead"/>
+        </VBox>
+    </GridPane>
+
+    <!-- Recent Campaigns Table -->
+    <VBox VBox.vgrow="ALWAYS" spacing="8">
+        <Label text="Recent Campaigns" styleClass="section-title"/>
+        <TableView fx:id="campaignTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colCampaignId" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="colCampaignName" text="Campaign Name" prefWidth="300"/>
+                <TableColumn fx:id="colRecipients" text="Recipients" prefWidth="100"/>
+                <TableColumn fx:id="colCreatedAt" text="Created At" prefWidth="200"/>
+            </columns>
+        </TableView>
+    </VBox>
+
+    <Label fx:id="statusLabel" styleClass="status-label" text=""/>
+</VBox>

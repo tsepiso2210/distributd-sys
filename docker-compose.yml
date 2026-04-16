@@ -1,0 +1,221 @@
+version: "3.9"
+
+# =============================================================
+# Docker Compose - Distributed Bulk Email Sender
+# =============================================================
+# Assignment requirement: "Docker Compose for local portability"
+#
+# Services:
+#   zookeeper          - Required by Kafka for cluster coordination
+#   kafka              - Apache Kafka message broker
+#   postgres           - PostgreSQL database
+#   email-api-service  - REST API (Spring Boot, port 8081)
+#   email-worker-service - Kafka consumer/worker (Spring Boot, port 8082)
+#
+# To start everything:
+#   docker-compose up -d
+#
+# To stop:
+#   docker-compose down
+#
+# To rebuild after code changes:
+#   docker-compose up -d --build
+#
+# IMPORTANT: Set real API keys in a .env file:
+#   MAILGUN_API_KEY=your-real-key
+#   MAILGUN_DOMAIN=your-mailgun-domain.com
+#   SENDGRID_API_KEY=your-real-key
+# =============================================================
+
+services:
+
+  # =============================================================
+  # Zookeeper - Required by Kafka for distributed coordination
+  # =============================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================
+  # Apache Kafka - Message broker
+  # Assignment requirement: "Apache Kafka for message brokering"
+  # Topics: email.high-priority, email.normal-priority, email.retry,
+  #         email.status, email.dead-letter
+  # =============================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      # Internal: used by services inside Docker network
+      # External: used by the JavaFX client running on your laptop
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      # JMX for monitoring
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # =============================================================
+  # PostgreSQL - Persistent storage
+  # Assignment requirement: "PostgreSQL for persistence"
+  # Tables: email_campaigns, email_tasks, email_status_logs, email_templates
+  # =============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: emaildb
+      POSTGRES_USER: emailuser
+      POSTGRES_PASSWORD: emailpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Run schema and seed on first startup
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emailuser -d emaildb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================
+  # email-api-service - REST API service
+  # Assignment requirement: "email-api-service"
+  # Exposes: POST /api/campaigns, GET /api/campaigns, GET /api/templates, etc.
+  # =============================================================
+  email-api-service:
+    build:
+      context: .
+      dockerfile: email-api-service/Dockerfile
+    container_name: email-api-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      # Database connection
+      DB_URL: jdbc:postgresql://postgres:5432/emaildb
+      DB_USERNAME: emailuser
+      DB_PASSWORD: emailpass
+
+      # Kafka connection (internal Docker network address)
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+      # Schema validation (use validate in production, create-drop for dev)
+      JPA_DDL_AUTO: validate
+
+      # Logging
+      SHOW_SQL: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # =============================================================
+  # email-worker-service - Kafka consumer / email sender
+  # Assignment requirements:
+  #   - consume Kafka messages
+  #   - send emails through provider layer
+  #   - retry failures with exponential backoff
+  #   - fail over from primary to secondary provider
+  #   - update statuses in PostgreSQL
+  # =============================================================
+  email-worker-service:
+    build:
+      context: .
+      dockerfile: email-worker-service/Dockerfile
+    container_name: email-worker-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      # Database
+      DB_URL: jdbc:postgresql://postgres:5432/emaildb
+      DB_USERNAME: emailuser
+      DB_PASSWORD: emailpass
+
+      # Kafka
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+      # Email Provider credentials
+      # REPLACE with real credentials in .env file
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-your-mailgun-api-key}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-your-mailgun-domain.com}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-your-sendgrid-api-key}
+
+      # Rate limiting
+      MAILGUN_RATE_LIMIT: 5
+      SENDGRID_RATE_LIMIT: 10
+
+      # Retry config
+      MAX_RETRY_ATTEMPTS: 3
+      RETRY_BASE_DELAY_MS: 1000
+      RETRY_MAX_DELAY_MS: 32000
+
+      JPA_DDL_AUTO: validate
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+# =============================================================
+# Named volumes for data persistence
+# =============================================================
+volumes:
+  postgres-data:
+    driver: local
+  kafka-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local

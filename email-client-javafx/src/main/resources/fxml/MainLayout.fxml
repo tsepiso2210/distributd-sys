@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!--
+    MainLayout.fxml - Application shell with sidebar navigation.
+
+    Assignment requirement: JavaFX desktop client with:
+     - Dashboard, Compose Bulk Email, Template Management, Reports/Logs, Failed Emails/Retry View
+-->
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.distributedemail.client.controller.MainLayoutController"
+            styleClass="main-pane">
+
+    <!-- TOP BAR -->
+    <top>
+        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="10">
+            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+            <Label text="Distributed Bulk Email Sender" styleClass="app-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="statusLabel" styleClass="status-label" text="Ready"/>
+        </HBox>
+    </top>
+
+    <!-- LEFT SIDEBAR NAVIGATION -->
+    <left>
+        <VBox fx:id="sidebar" styleClass="sidebar" spacing="4" prefWidth="210">
+            <padding><Insets top="20" right="10" bottom="20" left="10"/></padding>
+
+            <Label text="NAVIGATION" styleClass="nav-section-label"/>
+
+            <Button fx:id="btnDashboard" text="Dashboard"
+                    styleClass="nav-button" maxWidth="Infinity"
+                    onAction="#onDashboard"/>
+
+            <Button fx:id="btnCompose" text="Compose Bulk Email"
+                    styleClass="nav-button" maxWidth="Infinity"
+                    onAction="#onCompose"/>
+
+            <Button fx:id="btnTemplates" text="Template Manager"
+                    styleClass="nav-button" maxWidth="Infinity"
+                    onAction="#onTemplates"/>
+
+            <Button fx:id="btnReports" text="Reports / Logs"
+                    styleClass="nav-button" maxWidth="Infinity"
+                    onAction="#onReports"/>
+
+            <Button fx:id="btnFailed" text="Failed Emails"
+                    styleClass="nav-button" maxWidth="Infinity"
+                    onAction="#onFailedEmails"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <Label text="API: http://localhost:8081" styleClass="api-url-label" wrapText="true"/>
+        </VBox>
+    </left>
+
+    <!-- CENTER: dynamically loaded views -->
+    <center>
+        <StackPane styleClass="content-pane">
+            <Label text="Select a view from the sidebar" styleClass="placeholder-text"/>
+        </StackPane>
+    </center>
+</BorderPane>

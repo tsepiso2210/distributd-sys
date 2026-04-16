@@ -1,0 +1,81 @@
+# =============================================================
+# Email API Service Configuration
+# =============================================================
+# IMPORTANT: Never put real API keys here.
+# Use environment variables (shown as ${VAR_NAME}) and set them
+# in your .env file or Docker Compose environment section.
+# =============================================================
+
+server:
+  port: 8081
+
+spring:
+  application:
+    name: email-api-service
+
+  # PostgreSQL connection
+  # Assignment requirement: "Database storage for logs, reports, templates, tasks, and statuses"
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/emaildb}
+    username: ${DB_USERNAME:emailuser}
+    password: ${DB_PASSWORD:emailpass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      # "validate" ensures schema matches entities without auto-modifying it
+      # Use "create-drop" for first run / development, then switch to "validate"
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Apache Kafka configuration
+  # Assignment requirement: "Apache Kafka for message brokering"
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # Wait for acknowledgement from all replicas before considering message sent
+      acks: all
+      retries: 3
+      properties:
+        spring.json.add.type.headers: false
+        # Prevent duplicate messages in case of network failure
+        enable.idempotence: true
+
+# Actuator endpoints for health monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,kafka
+  endpoint:
+    health:
+      show-details: always
+
+# Application-level configuration
+app:
+  kafka:
+    topics:
+      high-priority: email.high-priority
+      normal-priority: email.normal-priority
+      retry: email.retry
+      status: email.status
+      dead-letter: email.dead-letter
+    # Number of partitions per topic - more partitions = more parallelism
+    # Assignment requirement: "Distributed email processing"
+    partitions: 3
+    replicas: 1
+
+logging:
+  level:
+    com.distributedemail: DEBUG
+    org.springframework.kafka: INFO

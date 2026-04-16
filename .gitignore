@@ -1,0 +1,33 @@
+# Maven
+target/
+*.class
+*.jar
+!**/src/main/**/*.jar
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+*.launch
+
+# Environment / secrets - NEVER commit these
+.env
+*.env.local
+*.env.production
+application-local.yml
+application-prod.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build outputs
+build/
+out/
+dist/

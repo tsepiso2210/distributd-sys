@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!--
+    FailedEmails.fxml - View and retry failed email tasks.
+    Assignment requirement: "Failed Emails / Retry View" GUI view
+-->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.distributedemail.client.controller.FailedEmailsController"
+      styleClass="view-pane" spacing="16">
+    <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="Failed Emails / Retry View" styleClass="view-title"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Refresh" styleClass="btn-secondary" onAction="#onRefresh"/>
+        <Button fx:id="btnRetry" text="Retry Selected" styleClass="btn-danger" onAction="#onRetrySelected"/>
+    </HBox>
+
+    <Label text="Tasks with status FAILED or DEAD_LETTERED:" styleClass="section-title"/>
+
+    <TableView fx:id="failedTable" VBox.vgrow="SOMETIMES" prefHeight="300">
+        <columns>
+            <TableColumn fx:id="colId" text="Task ID" prefWidth="70"/>
+            <TableColumn fx:id="colEmail" text="Recipient" prefWidth="200"/>
+            <TableColumn fx:id="colCampaignId" text="Campaign ID" prefWidth="100"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
+            <TableColumn fx:id="colProvider" text="Provider" prefWidth="100"/>
+            <TableColumn fx:id="colRetries" text="Retries" prefWidth="70"/>
+            <TableColumn fx:id="colError" text="Error" prefWidth="250"/>
+        </columns>
+    </TableView>
+
+    <Label text="Error Detail (click a task above):" styleClass="section-title"/>
+    <TextArea fx:id="txtErrorDetail" editable="false" prefRowCount="5"
+              styleClass="preview-area" promptText="Select a task to see full error details"/>
+
+    <Label fx:id="statusLabel" styleClass="status-label" text=""/>
+</VBox>

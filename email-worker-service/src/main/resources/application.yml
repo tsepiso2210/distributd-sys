@@ -1,0 +1,96 @@
+# =============================================================
+# Email Worker Service Configuration
+# =============================================================
+# IMPORTANT: Set MAILGUN_API_KEY and SENDGRID_API_KEY as
+# environment variables. Never commit real keys to source control.
+# =============================================================
+
+server:
+  port: 8082
+
+spring:
+  application:
+    name: email-worker-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/emaildb}
+    username: ${DB_USERNAME:emailuser}
+    password: ${DB_PASSWORD:emailpass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Kafka Consumer configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: email-worker-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      # Commit offset only after successful processing (at-least-once delivery)
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.distributedemail.common.kafka"
+        spring.json.value.default.type: com.distributedemail.common.kafka.EmailTaskMessage
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
+# Email Provider credentials
+# REPLACE these with real values via environment variables
+# Assignment requirement: "Keep API keys and secrets outside source code"
+email:
+  provider:
+    # Mailgun (PRIMARY provider)
+    mailgun:
+      api-key: ${MAILGUN_API_KEY:your-mailgun-api-key-here}
+      domain: ${MAILGUN_DOMAIN:your-mailgun-domain.com}
+      base-url: https://api.mailgun.net/v3
+      # Rate limit: max emails per second for Mailgun free tier
+      rate-limit-per-second: ${MAILGUN_RATE_LIMIT:5}
+
+    # SendGrid (SECONDARY/FAILOVER provider)
+    sendgrid:
+      api-key: ${SENDGRID_API_KEY:your-sendgrid-api-key-here}
+      base-url: https://api.sendgrid.com/v3
+      # Rate limit: max emails per second for SendGrid
+      rate-limit-per-second: ${SENDGRID_RATE_LIMIT:10}
+
+  # Retry configuration
+  # Assignment requirement: "Retry mechanism for failed email deliveries using exponential backoff"
+  retry:
+    max-attempts: ${MAX_RETRY_ATTEMPTS:3}
+    # Base delay in milliseconds; actual delay = baseDelay * 2^retryCount
+    base-delay-ms: ${RETRY_BASE_DELAY_MS:1000}
+    # Maximum delay cap (32 seconds)
+    max-delay-ms: ${RETRY_MAX_DELAY_MS:32000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Higher concurrency for high-priority topic consumers
+app:
+  kafka:
+    high-priority-concurrency: 5
+    normal-priority-concurrency: 2
+    retry-concurrency: 1
+
+logging:
+  level:
+    com.distributedemail: DEBUG
+    org.springframework.kafka: INFO

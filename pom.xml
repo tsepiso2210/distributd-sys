@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        ROOT POM - Multi-module Maven project
+        Each module is built independently but shares dependency versions
+        from this parent POM (BOM-style management).
+
+        Build order (Maven respects the module dependency graph):
+          1. email-common        (no dependencies on other modules)
+          2. email-api-service   (depends on email-common)
+          3. email-worker-service (depends on email-common)
+          4. email-client-javafx (standalone JavaFX app, no Spring)
+    -->
+
+    <groupId>com.distributedemail</groupId>
+    <artifactId>distributed-email-sender</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>Distributed Bulk Email Sender</name>
+    <description>
+        A scalable, fault-tolerant distributed bulk email delivery system.
+        Implements SendGrid/Mailgun-style bulk delivery with Kafka message brokering,
+        PostgreSQL persistence, provider failover, exponential backoff retries,
+        rate limiting, templates, and a JavaFX desktop client.
+    </description>
+
+    <modules>
+        <module>email-common</module>
+        <module>email-api-service</module>
+        <module>email-worker-service</module>
+        <module>email-client-javafx</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Core framework versions -->
+        <spring.boot.version>3.2.0</spring.boot.version>
+        <postgresql.version>42.7.1</postgresql.version>
+        <lombok.version>1.18.30</lombok.version>
+
+        <!-- UI -->
+        <javafx.version>21.0.1</javafx.version>
+
+        <!-- Messaging / resilience -->
+        <bucket4j.version>8.7.0</bucket4j.version>
+        <resilience4j.version>2.2.0</resilience4j.version>
+
+        <!-- HTTP / JSON -->
+        <okhttp.version>4.12.0</okhttp.version>
+        <jackson.version>2.16.1</jackson.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- ============================================================
+                 Spring Boot BOM
+                 Imports managed versions for all spring-* and spring-boot-*
+                 dependencies including spring-kafka, spring-data-jpa, etc.
+                 ============================================================ -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Internal shared module -->
+            <dependency>
+                <groupId>com.distributedemail</groupId>
+                <artifactId>email-common</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
+            <!-- ============================================================
+                 Lombok - compile-time code generation (getters, builders, etc.)
+                 ============================================================ -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- ============================================================
+                 PostgreSQL JDBC driver
+                 ============================================================ -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <!-- ============================================================
+                 Bucket4j - Token bucket rate limiter
+                 Assignment: "Rate limiting and throttling to prevent spam"
+                 Package: io.github.bucket4j (even though group ID is com.bucket4j in v8+)
+                 ============================================================ -->
+            <dependency>
+                <groupId>com.bucket4j</groupId>
+                <artifactId>bucket4j-core</artifactId>
+                <version>${bucket4j.version}</version>
+            </dependency>
+
+            <!-- ============================================================
+                 Resilience4j - Circuit breaker / bulkhead patterns
+                 ============================================================ -->
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-spring-boot3</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+
+            <!-- ============================================================
+                 OkHttp3 - HTTP client for calling Mailgun and SendGrid APIs
+                 ============================================================ -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- ============================================================
+                 Jackson - JSON serialisation
+                 Spring Boot BOM already manages jackson-databind, but we
+                 pin the version explicitly to ensure consistency.
+                 ============================================================ -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- ============================================================
+                 JavaFX (desktop client only — not loaded by Spring Boot modules)
+                 ============================================================ -->
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-controls</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-fxml</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-graphics</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ============================================================
+         Shared build plugins applied to ALL modules
+         ============================================================ -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.12.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>UTF-8</encoding>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
