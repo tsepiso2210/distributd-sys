@@ -1,0 +1,3 @@
+# Distributed Email Sender
+
+Initializing repository...
